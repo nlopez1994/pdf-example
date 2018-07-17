@@ -11,32 +11,55 @@ import com.itextpdf.text.pdf.*;
 
 /**
  * Hello world!
- *
  */
 public class App {
-	public static void main(String[] args) throws com.lowagie.text.DocumentException, IOException, DocumentException {
-		// String current = new java.io.File(".").getCanonicalPath();
+    public static void main(String[] args) throws com.lowagie.text.DocumentException, IOException, DocumentException {
+        // String current = new java.io.File(".").getCanonicalPath();
 
-		final File itextpdffile = File.createTempFile("itextpdf", ".pdf");
-		final File itextrendererfile = File.createTempFile("itextrendererfile", ".pdf");
-		final File pdffile = File.createTempFile("pdffile", ".pdf");
+        File example = new File("/Users/nahuellopez/Desktop/example.pdf");
 
-		FileOutputStream fos0 = new FileOutputStream(pdffile);
-		FileOutputStream fos1 = new FileOutputStream(itextpdffile);
-		FileOutputStream fos2 = new FileOutputStream(itextrendererfile);
+        if(!example.exists()) {
+            example.createNewFile();
+        }
 
-		// Build itextpdf file
+        final File itextpdffile = File.createTempFile("itextpdf", ".pdf");
+        final File itextrendererfile = File.createTempFile("itextrendererfile", ".pdf");
+        final File pdffile = File.createTempFile("pdffile", ".pdf");
 
-		Document document = new Document(PageSize.A6);
-		PdfWriter.getInstance(document, fos1);
-		document.open();
-		document.add(new Paragraph("Hello World!"));
-		document.close();
-		
-		fos1.close();
+        FileOutputStream fos0 = new FileOutputStream(pdffile);
+        FileOutputStream fos1 = new FileOutputStream(example);//new FileOutputStream(itextpdffile);
+        FileOutputStream fos2 = new FileOutputStream(itextrendererfile);
 
-		// Build itextrenderer file
-		ITextRenderer renderer = new ITextRenderer();
+        // Build itextpdf file
+
+//		Document document = new Document();
+//		PdfWriter.getInstance(document, fos1);
+//		document.open();
+//
+//		document.add(new Paragraph("Hello World!"));
+
+        App.HeaderTable event = new App.HeaderTable();
+        // step 1
+        Document document = new Document(PageSize.A4, 36, 36, 20 + event.getTableHeight(), 36);
+        // step 2
+        PdfWriter writer = PdfWriter.getInstance(document, fos1);
+        writer.setPageEvent(event);
+        // step 3
+        document.open();
+        // step 4
+        for(int i = 0; i < 50; i++) document.add(new Paragraph("Hello World!"));
+
+        document.newPage();
+        document.add(new Paragraph("Hello World!"));
+        document.newPage();
+        document.add(new Paragraph("Hello World!"));
+
+        fos1.flush();
+        document.close();
+        fos1.close();
+
+        // Build itextrenderer file
+		/*ITextRenderer renderer = new ITextRenderer();
 		String processedHtml = "<html><head></head><body><h1>Hello World!</h1></body></html>";
 		renderer.setDocumentFromString(processedHtml);
 		renderer.layout();
@@ -71,8 +94,34 @@ public class App {
 		fos0.flush();
 		doc.close();
 		fos0.close();
+*/
+        System.out.println(pdffile.getAbsolutePath());
+    }
 
-		System.out.println(pdffile.getAbsolutePath());
-	}
+    static class HeaderTable extends PdfPageEventHelper {
+        protected PdfPTable table;
+        protected float tableHeight;
+
+        public HeaderTable() {
+            table = new PdfPTable(1);
+            table.setTotalWidth(523);
+            table.setLockedWidth(true);
+            table.addCell("Header row 1");
+            table.addCell("Header row 2");
+            table.addCell("Header row 3");
+            tableHeight = table.getTotalHeight();
+        }
+
+        public float getTableHeight() {
+            return tableHeight;
+        }
+
+        public void onEndPage(PdfWriter writer, Document document) {
+            table.writeSelectedRows(0, -1,
+                    document.left(),
+                    document.top() + ((document.topMargin() + tableHeight) / 2),
+                    writer.getDirectContent());
+        }
+    }
 
 }
